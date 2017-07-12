@@ -5,6 +5,7 @@ const request = require('request');
 const twitter = require('twitter');
 const Spotify = require('node-spotify-api');
 const colors = require('colors');
+const asciify = require('asciify');
 
 //record user inputs
 var command = process.argv[2];
@@ -22,10 +23,11 @@ var log = (data) => {
 var app = {};
 const client = new twitter(keys.twitterKeys);
 const spotify = new Spotify(keys.spotifyKeys)
+var songPreview ='not-me'; 
 
 //logi for my-tweet
 app['my-tweets'] =  () => {
-  console.log(colors.red('<Showing the latest 20 tweets from Senator Elizabeth Warren>'))
+  console.log(colors.cyan('<Showing the latest 20 tweets from Senator Elizabeth Warren>'))
   client.get('statuses/user_timeline', { screen_name: 'SenWarren', count: 20 }, (err, data, res) => {
     if (err) throw err; 
     data.forEach((v) => {
@@ -37,26 +39,28 @@ app['my-tweets'] =  () => {
 };
 //logic for spotify
 app['spotify-this-song'] = (search) => {
+  var output = '';
   //default search title
   if (!search) {
     search = 'The Sign';
   }
   spotify.search({type: 'track', query: search}, (err, data) => {
     if (err) throw err; 
-      var v = data.tracks.items[0];
+      // var v = data.tracks.items[0];
     data.tracks.items.forEach((v) => {
       console.log('=================================================================')
       //artist name
       var artists ='';
       v.artists.forEach((v) => (artists += `${v.name} `))
-      console.log(`Artists: ${artists}`)
+      console.log(colors.green(`Artists: ${artists}`))
       //song name
-      console.log(`Song name: ${v.name}`)
+      console.log(colors.yellow(`Song name: ${v.name}`))
       //preview link
-      console.log(`Preview link: ${v.preview_url}`)
+      console.log(colors.magenta(`Preview link: ${v.preview_url}`))
       //album name
-      console.log(`Album name: ${v.album.name}`)
+      console.log(colors.cyan(`Album name: ${v.album.name}`))
     })
+    songPreview = data.tracks.items[0].preview_url;
   })
 }
 app['movie-this'] = (movie) => {
@@ -78,7 +82,16 @@ app['movie-this'] = (movie) => {
     console.log(`RottenTomatesRating: ${data.Ratings.filter((obj) => (obj.Source === 'Rotten Tomatoes'))[0].Value}`)
   })
 }
-app['do-what-it-says'] = function (){}
+app['do-what-it-says'] = function () {
+  var that = this;  
+  fs.readFile('random.txt', 'utf8', function (err, data) {
+    if (err) throw err;  
+    var newCommand = data.slice(0, data.indexOf(','))
+    var newInput = data.slice(data.indexOf(',') + 2, -1);
+    that[newCommand](newInput);
+    setTimeout(()=> (asciify('Awesome', function(err, res){ console.log(res) })), 2000)
+  })
+}
 
 app[command](input);
 
